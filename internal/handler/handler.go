@@ -4,7 +4,9 @@ import (
 	"my-social-platform/internal/middleware"
 	"my-social-platform/internal/service"
 	"net/http"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
@@ -54,4 +56,21 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// ProfileHandler - 获取当前登录用户信息（JWT解析后）
+func ProfileHandler(c *gin.Context) {
+	// 模拟获取 JWT 中的用户名（你也可以解析 token 并做真实用户查找）
+	authHeader := c.GetHeader("Authorization")
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+
+	parsedToken, _ := middleware.ParseJWT(token)
+	claims := parsedToken.Claims.(jwt.MapClaims)
+
+	username := claims["username"].(string)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Welcome to your profile",
+		"username": username,
+	})
 }

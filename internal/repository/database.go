@@ -8,7 +8,7 @@ import (
 )
 
 var DB *gorm.DB
-
+		
 // InitDB - 初始化MySQL数据库连接
 func InitDB() {
 	// 连接字符串
