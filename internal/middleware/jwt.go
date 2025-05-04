@@ -64,6 +64,17 @@ func saveKeys() error {
 	// - 私钥用于签名和解密
 	// - 公钥用于验证签名和加密
 	// 这两个密钥必须安全保存,尤其是私钥
+	// 	Go原生 RSA 私钥对象 (*rsa.PrivateKey)
+	//         ↓（转换为标准二进制）
+	// x509.MarshalPKCS1PrivateKey()
+	//         ↓
+	// PKCS#1 DER 格式（标准二进制）
+	//         ↓（转换为可读文本）
+	// pem.EncodeToMemory()
+	//         ↓
+	// PEM 格式（-----BEGIN ...）
+	//         ↓
+	// 写入 private.pem 文件
 
 	// 将私钥转换为标准的PKCS1格式
 	// PKCS1是RSA密钥的标准格式之一
@@ -86,7 +97,7 @@ func saveKeys() error {
 	); err != nil {
 		return err
 	}
-
+	
 	// 公钥的处理过程类似
 	// 但公钥可以公开,所以权限可以设为644(所有人可读)
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
