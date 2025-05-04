@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"my-social-platform/internal/model"
 	"net/http"
@@ -31,6 +32,8 @@ func init() {
 	// 尝试从文件加载密钥
 	if err = loadKeys(); err != nil {
 		// 如果加载失败，生成新的密钥对
+		// rand.Reader 提供一个安全的随机数生成源
+		// 2048 表示RSA密钥的位数,2048位提供足够的安全性
 		privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			panic("Failed to generate RSA key pair")
@@ -49,16 +52,33 @@ func init() {
 // 公钥保存为public.pem,权限设为644(所有用户可读,仅当前用户可写)
 func saveKeys() error {
 	// 创建keys目录,权限设为700(仅当前用户可读写执行)
+	// 在Linux/Unix系统中:
+	// - 7 表示 读(4) + 写(2) + 执行(1) 权限
+	// - 0 表示 无权限
+	// 所以 0700 表示仅文件所有者有完整权限,其他人无权限
 	if err := os.MkdirAll("keys", 0700); err != nil {
 		return err
 	}
 
-	// 将私钥转换为PKCS1格式并用PEM编码
+	// RSA是一种非对称加密算法,需要一对密钥:
+	// - 私钥用于签名和解密
+	// - 公钥用于验证签名和加密
+	// 这两个密钥必须安全保存,尤其是私钥
+
+	// 将私钥转换为标准的PKCS1格式
+	// PKCS1是RSA密钥的标准格式之一
 	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+
+	// PEM是一种文件格式,用于存储密钥、证书等
+	// 它会将二进制数据用Base64编码,并加上头尾标记
+	// 如 -----BEGIN RSA PRIVATE KEY-----
 	privateKeyPEM := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	}
+
+	// 将私钥写入文件,权限设为600(仅所有者可读写)
+	// 私钥必须严格保护,不能让其他用户访问
 	if err := ioutil.WriteFile(
 		filepath.Join("keys", "private.pem"),
 		pem.EncodeToMemory(privateKeyPEM),
@@ -67,7 +87,8 @@ func saveKeys() error {
 		return err
 	}
 
-	// 将公钥转换为PKCS1格式并用PEM编码
+	// 公钥的处理过程类似
+	// 但公钥可以公开,所以权限可以设为644(所有人可读)
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
 	publicKeyPEM := &pem.Block{
 		Type:  "RSA PUBLIC KEY",
@@ -85,25 +106,37 @@ func saveKeys() error {
 // 如果任一文件不存在或格式错误,返回error
 func loadKeys() error {
 	// 从private.pem加载并解析私钥
-	privateKeyBytes, err := ioutil.ReadFile(filepath.Join("keys", "private.pem"))
+	// 从项目根目录下的keys/private.pem加载私钥
+	// 使用os.ReadFile替代已弃用的ioutil.ReadFile
+	privateKeyBytes, err := os.ReadFile(filepath.Join("keys", "private.pem"))
 	if err != nil {
-		return err
+		return err // 如果文件不存在或无法读取则返回错误
 	}
+	// 使用pem.Decode解码PEM格式的私钥数据
 	block, _ := pem.Decode(privateKeyBytes)
+	if block == nil {
+		return fmt.Errorf("failed to decode private key PEM block")
+	}
+	// 将解码后的数据解析为RSA私钥
 	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse private key: %v", err)
 	}
 
-	// 从public.pem加载并解析公钥
-	publicKeyBytes, err := ioutil.ReadFile(filepath.Join("keys", "public.pem"))
+	// 从项目根目录下的keys/public.pem加载公钥
+	publicKeyBytes, err := os.ReadFile(filepath.Join("keys", "public.pem"))
 	if err != nil {
-		return err
+		return err // 如果文件不存在或无法读取则返回错误
 	}
+	// 使用pem.Decode解码PEM格式的公钥数据
 	block, _ = pem.Decode(publicKeyBytes)
+	if block == nil {
+		return fmt.Errorf("failed to decode public key PEM block")
+	}
+	// 将解码后的数据解析为RSA公钥
 	publicKey, err = x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse public key: %v", err)
 	}
 
 	return nil
