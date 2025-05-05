@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"my-social-platform/internal/dto"
 	"my-social-platform/internal/model"
 	"my-social-platform/internal/repository"
 
@@ -21,6 +22,14 @@ func HashPassword(password string) (string, error) {
 func VerifyPassword(hashedPassword, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+// User到UserDTO的转换函数
+func ToUserDTO(user *model.User) *dto.UserDTO {
+	return &dto.UserDTO{
+		ID:       user.ID,
+		Username: user.Username,
+	}
 }
 
 // Register - 注册用户
@@ -45,7 +54,7 @@ func VerifyPassword(hashedPassword, password string) bool {
 //	        return userRepository.save(user);
 //	    }
 //	}
-func Register(username, password string) (*model.User, error) {
+func Register(username, password string) (*dto.UserDTO, error) {
 	// 1. 对密码进行加密,类似于Spring Security的passwordEncoder
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
@@ -64,7 +73,7 @@ func Register(username, password string) (*model.User, error) {
 		return nil, err
 	}
 
-	return user, nil
+	return ToUserDTO(user), nil
 }
 
 // Login - 用户登录
@@ -90,7 +99,7 @@ func Register(username, password string) (*model.User, error) {
 //	        return user;
 //	    }
 //	}
-func Login(username, password string) (*model.User, error) {
+func Login(username, password string) (*dto.UserDTO, error) {
 	var user model.User
 	// 1. 根据用户名查找用户
 	// repository.DB.Where相当于JPA的findByUsername方法
@@ -106,5 +115,14 @@ func Login(username, password string) (*model.User, error) {
 	}
 
 	// 3. 验证通过,返回用户信息
-	return &user, nil
+	return ToUserDTO(&user), nil
+}
+
+// GetUserByUsername - 根据用户名查找用户（用于JWT生成）
+func GetUserByUsername(username string, user *model.User) error {
+	// First函数用于查询数据库并返回第一条匹配的记录
+	// 它会将查询结果填充到传入的user指针中
+	// 这里user是一个空的model.User指针，First会用查询到的数据填充它
+	// 如果找不到记录，会返回gorm.ErrRecordNotFound错误
+	return repository.DB.Where("username = ?", username).First(user).Error
 }

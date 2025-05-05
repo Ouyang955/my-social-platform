@@ -154,6 +154,12 @@ func loadKeys() error {
 }
 
 // GenerateJWT 生成JWT(JSON Web Token)
+// JWT包含三部分:
+// 1. Header: 包含签名算法和类型
+// 2. Payload: 包含用户信息和过期时间
+// 3. Signature: 使用私钥对前两部分进行签名
+// PayLoad相当于下面的claims
+
 // 使用RS256算法和私钥对token进行签名
 // 参数:
 //   - user: 用户模型对象,包含用户信息
@@ -185,7 +191,11 @@ func GenerateJWT(user model.User) (string, error) {
 //   - error: 如果解析失败或签名无效则返回error
 func ParseJWT(tokenStr string) (*jwt.Token, error) {
 	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		// 验证签名算法是否为RSA
+		// 这段代码用于验证JWT令牌的签名方法是否为RSA算法
+		// token.Method获取令牌使用的签名方法
+		// (*jwt.SigningMethodRSA)是类型断言,检查签名方法是否为RSA类型
+		// 如果不是RSA类型(即!ok为true),则返回签名无效错误
+		// 这是一个安全措施,确保只接受使用预期算法(RSA)签名的令牌
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
@@ -194,8 +204,16 @@ func ParseJWT(tokenStr string) (*jwt.Token, error) {
 }
 
 // JWTAuthMiddleware 创建一个Gin中间件用于验证JWT
-// 检查请求头中的Authorization字段是否包含有效的JWT
-// 如果token无效或已过期,则返回401未授权错误
+// 该中间件执行以下操作:
+// 1. 从HTTP请求头中获取Authorization字段
+// 2. 检查Authorization字段是否存在,不存在则返回401未授权错误
+// 3. 从Authorization字段中提取JWT(去除"Bearer "前缀)
+// 4. 使用ParseJWT函数验证token的有效性和签名
+// 5. 如果token无效或已过期,则返回401未授权错误
+// 6. 如果token有效,则允许请求继续处理
+//
+// 返回:
+//   - gin.HandlerFunc: Gin中间件函数,用于集成到路由中
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从请求头获取Authorization字段

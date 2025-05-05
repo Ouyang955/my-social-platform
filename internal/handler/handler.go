@@ -2,6 +2,7 @@ package handler
 
 import (
 	"my-social-platform/internal/middleware"
+	"my-social-platform/internal/model"
 	"my-social-platform/internal/pkg/logger"
 	"my-social-platform/internal/service"
 	"net/http"
@@ -98,23 +99,29 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := service.Login(input.Username, input.Password)
+	var userModel model.User
+	if err := service.GetUserByUsername(input.Username, &userModel); err != nil {
+		logger.Log(logger.WARNING, "LOGIN", input.Username, clientIP, "Login failed: "+err.Error())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+
+	userDTO, err := service.Login(input.Username, input.Password)
 	if err != nil {
 		logger.Log(logger.WARNING, "LOGIN", input.Username, clientIP, "Login failed: "+err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := middleware.GenerateJWT(*user)
+	token, err := middleware.GenerateJWT(userModel)
 	if err != nil {
 		logger.Log(logger.ERROR, "LOGIN", input.Username, clientIP, "Failed to generate token: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	// 登录成功，记录日志
 	logger.Log(logger.INFO, "LOGIN", input.Username, clientIP, "User logged in successfully")
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user": userDTO})
 }
 
 // ProfileHandler - 获取当前登录用户信息（JWT解析后）
