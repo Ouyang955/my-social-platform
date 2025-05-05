@@ -2,6 +2,7 @@ package handler
 
 import (
 	"my-social-platform/internal/middleware"
+	"my-social-platform/internal/pkg/logger"
 	"my-social-platform/internal/service"
 	"net/http"
 	"strings"
@@ -17,10 +18,14 @@ func RegisterHandler(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
+	// 获取客户端IP
+	clientIP := c.ClientIP()
+
 	// 1. 将请求体绑定到input结构体
 	// ShouldBindJSON类似于SpringBoot中的@RequestBody注解
 	// 它会自动将JSON请求体解析并映射到input结构体中
 	if err := c.ShouldBindJSON(&input); err != nil {
+		logger.Log(logger.ERROR, "REGISTER", input.Username, clientIP, "Invalid input format")
 		// 如果解析失败,返回400错误
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
@@ -30,10 +35,14 @@ func RegisterHandler(c *gin.Context) {
 	// 类似于SpringBoot中注入Service并调用其方法
 	user, err := service.Register(input.Username, input.Password)
 	if err != nil {
+		logger.Log(logger.ERROR, "REGISTER", input.Username, clientIP, "Failed to register user: "+err.Error())
 		// 如果注册失败,返回500错误
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
+
+	// 3. 注册成功，记录日志
+	logger.Log(logger.INFO, "REGISTER", input.Username, clientIP, "User registered successfully")
 
 	// 3. 注册成功,返回201状态码和用户信息
 	// gin.H相当于Java中的Map或ResponseEntity
@@ -77,31 +86,42 @@ func LoginHandler(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
+	// 获取客户端IP
+	clientIP := c.ClientIP()
+
 	// 使用gin框架的ShouldBindJSON方法将请求体中的JSON数据解析到input结构体中
 	// 如果解析失败(比如JSON格式错误或缺少必要字段),err会包含具体错误信息
 	// 这一步相当于SpringBoot中使用@RequestBody注解自动将JSON请求体绑定到对象
 	if err := c.ShouldBindJSON(&input); err != nil {
+		logger.Log(logger.ERROR, "LOGIN", input.Username, clientIP, "Invalid input format")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	user, err := service.Login(input.Username, input.Password)
 	if err != nil {
+		logger.Log(logger.WARNING, "LOGIN", input.Username, clientIP, "Login failed: "+err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	token, err := middleware.GenerateJWT(*user)
 	if err != nil {
+		logger.Log(logger.ERROR, "LOGIN", input.Username, clientIP, "Failed to generate token: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
+	// 登录成功，记录日志
+	logger.Log(logger.INFO, "LOGIN", input.Username, clientIP, "User logged in successfully")
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 // ProfileHandler - 获取当前登录用户信息（JWT解析后）
 func ProfileHandler(c *gin.Context) {
+	// 获取客户端IP
+	clientIP := c.ClientIP()
+
 	// 模拟获取 JWT 中的用户名（你也可以解析 token 并做真实用户查找）
 	authHeader := c.GetHeader("Authorization")
 	token := strings.TrimPrefix(authHeader, "Bearer ")
@@ -110,6 +130,9 @@ func ProfileHandler(c *gin.Context) {
 	claims := parsedToken.Claims.(jwt.MapClaims)
 
 	username := claims["username"].(string)
+
+	// 记录访问日志
+	logger.Log(logger.INFO, "PROFILE", username, clientIP, "User accessed profile")
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "Welcome to your profile",

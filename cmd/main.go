@@ -4,6 +4,7 @@ import (
 	"log"
 	"my-social-platform/internal/handler"
 	"my-social-platform/internal/middleware"
+	"my-social-platform/internal/pkg/logger"
 	"my-social-platform/internal/repository"
 
 	"github.com/gin-contrib/cors"
@@ -11,6 +12,12 @@ import (
 )
 
 func main() {
+	// 初始化日志系统
+	if err := logger.InitLogger(); err != nil {
+		log.Fatal("Failed to initialize logger:", err)
+	}
+	defer logger.Close()
+
 	// 初始化数据库连接
 	repository.InitDB()
 	defer repository.CloseDB()
