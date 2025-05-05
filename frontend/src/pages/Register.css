@@ -1,4 +1,4 @@
-.login-container {
+.register-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,7 +20,7 @@
   }
 }
 
-.login-box {
+.register-box {
   width: 100%;
   max-width: 440px;
   padding: 2.5rem;
@@ -32,7 +32,7 @@
   transition: all 0.3s ease;
 }
 
-.login-box:hover {
+.register-box:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
 }
@@ -57,7 +57,7 @@
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
-.login-box h1 {
+.register-box h1 {
   text-align: center;
   color: #003c88;
   margin-bottom: 2rem;
@@ -100,21 +100,17 @@
   box-shadow: 0 4px 12px rgba(0, 60, 136, 0.3);
 }
 
-.register-link {
+.login-link {
   text-align: center;
   margin-top: 1rem;
   color: #666;
 }
 
-.register-link a {
+.login-link a {
   color: #1890ff;
   cursor: pointer;
 }
 
-.register-link a:hover {
+.login-link a:hover {
   color: #40a9ff;
-}
-
-.ant-form-item {
-  margin-bottom: 1.5rem;
 } 

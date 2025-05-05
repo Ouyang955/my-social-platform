@@ -2,44 +2,52 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
 import axios from 'axios';
-import './Login.css';
+import './Register.css';
 // @ts-ignore
 import logoImage from '../assets/scut-logo.png';
 
-interface LoginForm {
+interface RegisterForm {
   username: string;
   password: string;
+  confirmPassword: string;
 }
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = async (values: LoginForm) => {
+  const onFinish = async (values: RegisterForm) => {
+    if (values.password !== values.confirmPassword) {
+      message.error('两次输入的密码不一致');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8080/login', values);
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        message.success('登录成功！');
-        navigate('/home');
+      const response = await axios.post('http://localhost:8080/register', {
+        username: values.username,
+        password: values.password
+      });
+      if (response.data.user) {
+        message.success('注册成功！');
+        navigate('/');
       }
     } catch (error) {
-      message.error('登录失败，请检查用户名和密码');
+      message.error('注册失败，请重试');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className="register-container">
+      <div className="register-box">
         <div className="logo-container">
           <img src={logoImage} alt="华南理工大学校徽" className="school-logo" />
         </div>
         <h1>校园智能社交平台</h1>
         <Form
-          name="login"
+          name="register"
           onFinish={onFinish}
           autoComplete="off"
           layout="vertical"
@@ -60,6 +68,14 @@ const Login: React.FC = () => {
             <Input.Password size="large" placeholder="请输入密码" />
           </Form.Item>
 
+          <Form.Item
+            label="确认密码"
+            name="confirmPassword"
+            rules={[{ required: true, message: '请确认密码！' }]}
+          >
+            <Input.Password size="large" placeholder="请再次输入密码" />
+          </Form.Item>
+
           <Form.Item>
             <Button
               type="primary"
@@ -68,12 +84,12 @@ const Login: React.FC = () => {
               block
               loading={loading}
             >
-              登录
+              注册
             </Button>
           </Form.Item>
 
-          <div className="register-link">
-            还没有账号？<a onClick={() => navigate('/register')}>立即注册</a>
+          <div className="login-link">
+            已有账号？<a onClick={() => navigate('/')}>立即登录</a>
           </div>
         </Form>
       </div>
@@ -81,4 +97,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login; 
+export default Register; 

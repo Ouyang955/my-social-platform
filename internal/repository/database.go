@@ -13,7 +13,7 @@ var DB *gorm.DB
 // InitDB - 初始化MySQL数据库连接
 func InitDB() {
 	// 连接字符串
-	dsn := "root:@/social_platform?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root@tcp(127.0.0.1:3306)/social_platform?charset=utf8mb4&parseTime=True&loc=Local"
 
 	// 尝试连接数据库
 	var err error
