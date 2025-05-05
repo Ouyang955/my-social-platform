@@ -97,7 +97,7 @@ func saveKeys() error {
 	); err != nil {
 		return err
 	}
-	
+
 	// 公钥的处理过程类似
 	// 但公钥可以公开,所以权限可以设为644(所有人可读)
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)

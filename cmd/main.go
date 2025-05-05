@@ -6,6 +6,7 @@ import (
 	"my-social-platform/internal/middleware"
 	"my-social-platform/internal/repository"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,13 @@ func main() {
 
 	// 创建gin引擎
 	r := gin.Default()
+
+	// 配置CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	r.Use(cors.New(config))
 
 	// 注册和登录接口
 	r.POST("/register", handler.RegisterHandler)
@@ -33,5 +41,4 @@ func main() {
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
-
 }
