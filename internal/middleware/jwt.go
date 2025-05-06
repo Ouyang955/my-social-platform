@@ -170,8 +170,9 @@ func loadKeys() error {
 func GenerateJWT(user model.User) (string, error) {
 	// 创建JWT的claims(声明)
 	claims := jwt.MapClaims{
-		"username": user.Username,                         // 用户名,用于标识token所属用户
-		"exp":      time.Now().Add(time.Hour * 24).Unix(), // 过期时间,24小时后
+		"user_id":  user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	// 使用RS256算法创建token
@@ -233,7 +234,16 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// token验证通过,继续处理请求
+		// 解析 claims 并注入 user_id 和 username
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if userID, ok := claims["user_id"].(float64); ok {
+				c.Set("user_id", uint(userID))
+			}
+			if username, ok := claims["username"].(string); ok {
+				c.Set("username", username)
+			}
+		}
+
 		c.Next()
 	}
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"my-social-platform/internal/middleware"
 	"my-social-platform/internal/model"
 	"my-social-platform/internal/pkg/logger"
@@ -129,20 +130,115 @@ func ProfileHandler(c *gin.Context) {
 	// 获取客户端IP
 	clientIP := c.ClientIP()
 
-	// 模拟获取 JWT 中的用户名（你也可以解析 token 并做真实用户查找）
+	// 从JWT中获取用户信息
 	authHeader := c.GetHeader("Authorization")
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-	parsedToken, _ := middleware.ParseJWT(token)
-	claims := parsedToken.Claims.(jwt.MapClaims)
+	parsedToken, err := middleware.ParseJWT(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的token"})
+		return
+	}
 
+	claims := parsedToken.Claims.(jwt.MapClaims)
 	username := claims["username"].(string)
+	userID := uint(claims["user_id"].(float64))
+
+	// 获取用户完整信息
+	userProfile, err := service.GetUserProfileByID(userID)
+	if err != nil {
+		logger.Log(logger.ERROR, "PROFILE", username, clientIP, "获取用户资料失败: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户资料失败"})
+		return
+	}
+
+	// 获取用户的帖子
+	posts, err := service.GetPostsByUserIDService(userID)
+	if err != nil {
+		logger.Log(logger.ERROR, "PROFILE", username, clientIP, "获取用户帖子失败: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户帖子失败"})
+		return
+	}
 
 	// 记录访问日志
-	logger.Log(logger.INFO, "PROFILE", username, clientIP, "User accessed profile")
+	logger.Log(logger.INFO, "PROFILE", username, clientIP, "用户访问个人资料")
 
+	// 返回完整的用户资料和帖子
 	c.JSON(http.StatusOK, gin.H{
-		"message":  "Welcome to your profile",
-		"username": username,
+		"user":  userProfile,
+		"posts": posts,
 	})
 }
+
+// GetAllPostsHandler - 获取所有帖子
+func GetAllPostsHandler(c *gin.Context) {
+	// 获取客户端IP
+	clientIP := c.ClientIP()
+
+	// 获取用户信息（如果已登录）
+	_, exists := c.Get("user_id")
+	username, _ := c.Get("username")
+
+	// 记录访问日志
+	if exists {
+		logger.Log(logger.INFO, "POSTS", username.(string), clientIP, "User accessed all posts")
+	} else {
+		logger.Log(logger.INFO, "POSTS", "guest", clientIP, "Guest accessed all posts")
+	}
+
+	// 调用服务层获取所有帖子
+	posts, err := service.GetAllPostsService()
+	if err != nil {
+		logger.Log(logger.ERROR, "POSTS", "system", clientIP, "获取帖子失败: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子失败"})
+		return
+	}
+
+	// 处理图片URL格式，确保前端可以正确显示
+	for i := range posts {
+		// 如果图片路径是相对路径，转换为绝对URL
+		if posts[i].Images != "" && !strings.HasPrefix(posts[i].Images, "http") {
+			// 如果是上传文件路径，添加服务器域名
+			if strings.HasPrefix(posts[i].Images, "/uploads/") {
+				// 在生产环境中应该使用配置的服务器域名
+				// posts[i].Images = "https://your-domain.com" + posts[i].Images
+				// 开发环境使用本地地址
+				posts[i].Images = "http://localhost:8080" + posts[i].Images
+			}
+		}
+	}
+
+	// 记录找到的帖子数量
+	logger.Log(logger.INFO, "POSTS", "system", clientIP, fmt.Sprintf("找到 %d 条帖子", len(posts)))
+
+	// 返回帖子列表
+	c.JSON(http.StatusOK, gin.H{"posts": posts})
+}
+
+// GetUserPostsHandler - 获取指定用户的所有帖子
+func GetUserPostsHandler(c *gin.Context) {
+	// 从JWT中获取当前登录的用户ID
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 获取客户端IP
+	clientIP := c.ClientIP()
+	username, _ := c.Get("username")
+
+	// 记录访问日志
+	logger.Log(logger.INFO, "USER_POSTS", username.(string), clientIP, "User accessed their posts")
+
+	// 调用服务层获取用户的所有帖子
+	posts, err := service.GetPostsByUserIDService(userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"posts": posts})
+}
+
+// We've moved this functionality to FileUploadImageHandler in file_handler.go

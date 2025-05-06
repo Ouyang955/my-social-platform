@@ -14,18 +14,21 @@ interface LoginForm {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const onFinish = async (values: LoginForm) => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8080/login', values);
+      const response = await axios.post('/login', values);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         message.success('登录成功！');
-        navigate('/home');
+        navigate('/');
       }
     } catch (error) {
       message.error('登录失败，请检查用户名和密码');
+      setErrorMsg('用户名或密码错误');
+      console.error('登录错误:', error);
     } finally {
       setLoading(false);
     }
@@ -71,6 +74,12 @@ const Login: React.FC = () => {
               登录
             </Button>
           </Form.Item>
+
+          {errorMsg && (
+            <div className="error-message" style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
+              {errorMsg}
+            </div>
+          )}
 
           <div className="register-link">
             还没有账号？<a onClick={() => navigate('/register')}>立即注册</a>

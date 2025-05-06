@@ -1,0 +1,41 @@
+.messages-container {
+  padding: 16px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.messages-header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.messages-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.unread-message {
+  background-color: #f0f7ff;
+}
+
+.message-time {
+  color: #999;
+  font-size: 12px;
+}
+
+/* 列表项样式 */
+.ant-list-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.ant-list-item-meta-title {
+  margin-bottom: 4px !important;
+  font-size: 15px;
+}
+
+.ant-list-item-meta-description {
+  font-size: 13px;
+  color: #666;
+} 

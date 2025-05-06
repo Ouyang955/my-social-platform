@@ -1,0 +1,42 @@
+.profile-edit-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.profile-edit-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
+.profile-edit-header {
+  display: flex;
+  align-items: center;
+}
+
+.profile-edit-header span {
+  margin-left: 10px;
+}
+
+.avatar-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.avatar-upload-container .ant-avatar {
+  margin-bottom: 16px;
+}
+
+.avatar-uploader {
+  margin-top: 8px;
+}
+
+@media (max-width: 576px) {
+  .profile-edit-container {
+    padding: 0 16px;
+  }
+} 

@@ -3,7 +3,10 @@
 本项目启动顺序建议：**先启动 MySQL 数据库，再启动后端服务，最后启动前端服务。**
 
 ---
-
+关闭自动补全ctrl +shift +p
+Cursor: Disable AI Autocomplete
+启用自动补全
+Cursor: Enable AI Autocomplete
 ## 1. 启动 MySQL 数据库
 
 ### Windows 下常用方法：
@@ -15,8 +18,10 @@
 
 #### 方法二：命令行启动
 ```powershell
-# 打开 PowerShell 或 CMD，输入：
+# 以管理员权限打开 PowerShell 或 CMD，输入：
 net start mysql
+
+net stop MySQL（关闭）
 # 或
 net start mysql80
 ```

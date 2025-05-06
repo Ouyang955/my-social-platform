@@ -1,0 +1,36 @@
+.navbar-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #fff;
+  border-top: 1px solid #f0f0f0;
+  z-index: 100;
+}
+
+.adm-tab-bar {
+  --adm-color-primary: #1890ff;
+  height: 50px;
+}
+
+.adm-tab-bar-item-icon {
+  font-size: 24px;
+  height: 24px;
+  line-height: 24px;
+}
+
+/* 发布按钮特殊样式 */
+.adm-tab-bar-item:nth-child(3) .adm-tab-bar-item-icon {
+  color: #1890ff;
+  transform: translateY(-14px);
+  background-color: #fff;
+  border-radius: 50%;
+  padding: 5px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 页面内容留出底部导航空间 */
+.main-content {
+  padding-bottom: 60px;
+} 

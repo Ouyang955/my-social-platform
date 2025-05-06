@@ -27,8 +27,14 @@ func VerifyPassword(hashedPassword, password string) bool {
 // User到UserDTO的转换函数
 func ToUserDTO(user *model.User) *dto.UserDTO {
 	return &dto.UserDTO{
-		ID:       user.ID,
-		Username: user.Username,
+		ID:          user.ID,
+		Username:    user.Username,
+		Nickname:    user.Nickname,
+		Avatar:      user.Avatar,
+		Bio:         user.Bio,
+		FollowCount: user.FollowCount,
+		FansCount:   user.FansCount,
+		LikeCount:   user.LikeCount,
 	}
 }
 
@@ -76,29 +82,6 @@ func Register(username, password string) (*dto.UserDTO, error) {
 	return ToUserDTO(user), nil
 }
 
-// Login - 用户登录
-// Login - 用户登录方法
-// 类似于Java中的Service层登录方法:
-// @Service
-//
-//	public class AuthService {
-//	    @Autowired
-//	    private UserRepository userRepository;
-//
-//	    public User login(String username, String password) throws Exception {
-//	        // 1. 根据用户名查找用户
-//	        User user = userRepository.findByUsername(username)
-//	            .orElseThrow(() -> new Exception("User not found"));
-//
-//	        // 2. 验证密码
-//	        if(!passwordEncoder.matches(password, user.getPassword())) {
-//	            throw new Exception("Invalid password");
-//	        }
-//
-//	        // 3. 返回用户信息
-//	        return user;
-//	    }
-//	}
 func Login(username, password string) (*dto.UserDTO, error) {
 	var user model.User
 	// 1. 根据用户名查找用户

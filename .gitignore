@@ -6,6 +6,10 @@ keys/
 logs/
 *.log
 
+# 图片上传目录
+uploads/
+uploads/images/
+
 # 编译输出
 *.exe
 *.exe~
@@ -32,3 +36,4 @@ vendor/
 # 操作系统文件
 .DS_Store
 Thumbs.db 
+node_modules
