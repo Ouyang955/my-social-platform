@@ -125,8 +125,26 @@ const ProfileEdit: React.FC = () => {
     
     if (info.file.status === 'done') {
       setUploadLoading(false);
-      setImageUrl(info.file.response.url);
+      // 检查响应格式并获取正确的URL
+      console.log('上传响应:', info.file.response);
+      if (info.file.response.full_url) {
+        setImageUrl(info.file.response.full_url);
+      } else if (info.file.response.url) {
+        // 如果是相对路径，添加基础URL
+        const url = info.file.response.url;
+        if (url.startsWith('/uploads/')) {
+          setImageUrl(`http://localhost:8080${url}`);
+        } else {
+          setImageUrl(url);
+        }
+      }
       message.success('头像上传成功');
+    }
+    
+    if (info.file.status === 'error') {
+      setUploadLoading(false);
+      console.error('上传失败:', info.file.error);
+      message.error('头像上传失败');
     }
   };
 
@@ -172,7 +190,7 @@ const ProfileEdit: React.FC = () => {
               icon={!imageUrl && <UserOutlined />}
             />
             <Upload
-              name="avatar"
+              name="image"
               action="/api/upload/image"
               headers={{ Authorization: `Bearer ${localStorage.getItem('token') || ''}` }}
               showUploadList={false}
